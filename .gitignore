@@ -62,3 +62,6 @@ typings/
 
 # SQLite database file
 *.db
+
+#modules
+node_modules

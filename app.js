@@ -3,7 +3,9 @@
 // load modules
 const express = require('express');
 const morgan = require('morgan');
+const { sequelize } = require('./models/index');
 
+const routes =require ('./routes');
 // variable to enable global error logging
 const enableGlobalErrorLogging = process.env.ENABLE_GLOBAL_ERROR_LOGGING === 'true';
 
@@ -13,6 +15,17 @@ const app = express();
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
 
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Connection to the database successful!');
+    console.log('Synchronizing the models with the database') 
+  await sequelize.sync();
+  } catch (error) {
+    console.error('Error connecting to the database: ', error);
+  }
+})();
+
 // setup a friendly greeting for the root route
 app.get('/', (req, res) => {
   res.json({
@@ -20,6 +33,7 @@ app.get('/', (req, res) => {
   });
 });
 
+app.use('/api',routes);
 // send 404 if no other route matched
 app.use((req, res) => {
   res.status(404).json({

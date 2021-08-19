@@ -12,28 +12,22 @@ module.exports = (sequelize, DataTypes) => {
   };
   Course.init({
     title: {type:DataTypes.STRING,
-      allowNull:false,
-      validate:{
-        notEmpty:{msg:"Must have a valid Title"}
-      }
+        allowNull:false,
+        validate:{
+            notEmpty:{msg:"Must have a valid Title name"}
+        }
     },
     description: {type:DataTypes.STRING,
         allowNull:false,
         validate:{
-          notEmpty:{msg:"Must have a valid description"}
+            notEmpty:{msg:"Must have a valid description"}
         }
       },
-    estimatedTime: {type:DataTypes.STRING,
-        allowNull:false,
-        validate:{
-          notEmpty:{msg:"Must have a valid estimated time"}
-        }
+      estimatedTime: {type:DataTypes.STRING,
+        allowNull:true,
       },
-    materialsNeeded: {type:DataTypes.STRING,
-        allowNull:false,
-        validate:{
-          notEmpty:{msg:"Must have a valid material"}
-        }
+      materialsNeeded: {type:DataTypes.STRING,
+        allowNull:true,
       },  
   }, {
     sequelize,
@@ -41,7 +35,9 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Course.associate =(models)=>{
-      Course.belongsTo(models.User)
+      Course.belongsTo(models.User,{
+        foreignKey:{fieldName: "userId"},
+    })
   }
   return Course;
 };

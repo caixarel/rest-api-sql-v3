@@ -12,16 +12,33 @@ module.exports = (sequelize, DataTypes) => {
   };
   User.init({
     firstName: {type:DataTypes.STRING,
-     
+        allowNull:false,
+        validate:{
+            notEmpty:{msg:"Must have a valid First name"}
+        }
     },
     lastName: {type:DataTypes.STRING,
-        
+        allowNull:false,
+        validate:{
+            notEmpty:{msg:"Must have a valid Last name"}
+        }
       },
       emailAddress: {type:DataTypes.STRING,
-        
+        allowNull:false,
+        validate:{
+            isEmail:{msg:"Must have a valid email"}
+        }
       },
     password: {type:DataTypes.STRING,
-        
+        allowNull:false,
+        validate:{
+            notEmpty:{msg:"Must have a valid Last name"},
+            notNull:{msg:'A password is required'},
+            len:{
+                args:[8,20],
+                msg:'The password shoud be betwwen 8 and 20 letters'
+            }
+        }
       }  
   }, {
     sequelize,

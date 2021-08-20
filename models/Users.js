@@ -1,14 +1,8 @@
 const { Model } = require('sequelize');
+const bcrypt = require('bcryptjs');
+//Model for the Users Table
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
-    static associate(models) {
-      // define association here
-    }
   };
   User.init({
     firstName: {type:DataTypes.STRING,
@@ -25,27 +19,40 @@ module.exports = (sequelize, DataTypes) => {
       },
       emailAddress: {type:DataTypes.STRING,
         allowNull:false,
+        unique:true,
         validate:{
-            isEmail:{msg:"Must have a valid email"}
+          notEmpty:{msg:"Must have a email"},
+          isEmail:{msg:"Must have a valid email"},
+          notNull:{msg:'email is required'},
         }
       },
     password: {type:DataTypes.STRING,
         allowNull:false,
         validate:{
-            notEmpty:{msg:"Must have a valid Last name"},
+            notEmpty:{msg:"Must have a valid password"},
             notNull:{msg:'A password is required'},
             len:{
                 args:[8,20],
                 msg:'The password shoud be betwwen 8 and 20 letters'
+            },
+            set(val){
+              const hashedPassword =bcrypt.hashSync(val,10);
+              this.setDataValue('password',hashedPassword);
             }
         }
-      }  
+      }  ,
   }, {
     sequelize,
     modelName: 'User',
   });
+  //creates a association with the Courses table
   User.associate = (models)=>{
-      User.hasMany(models.Course);
+      User.hasMany(models.Course,{
+        foreignKey:{
+          fieldName: "userId",
+          allowNull:true
+        },
+    });
   }
   return User;
 };

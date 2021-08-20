@@ -3,14 +3,17 @@
 const express = require('express');
 const User = require('./models').User;
 const { Course } = require('./models/')
+const { authenticateUser } = require('./middleware/user-authentication');
 
 
 // Construct a router instance.
 const router = express.Router();
-// Route that returns a list of users.
-router.get('/users',async (req,res)=>{
+// Route that returns data about the authenticated user
+router.get('/users',authenticateUser ,async (req,res)=>{
+    const currentUser =req.currentUser;
     try{
-        const user = await User.findByPk(1);
+        //finds the current user on database 
+        const user = await User.findByPk(currentUser.id,{attributes:["firstName","lastName","emailAddress"]});
         res.json({
             firstName:user.firstName,
             lastName:user.lastName,
@@ -22,93 +25,103 @@ router.get('/users',async (req,res)=>{
 
     }
  })
-
- router.post('/users',async (req,res)=>{
+//Creates a new user
+router.post('/users',async (req,res)=>{
     try{
         await User.create(req.body);
-        res.location('/').status(201).json({ "message": "Account successfully created!" });
+        res.location('/').status(201).end();
+    //verifies if there are vmodel validation errors
     } catch(err){
         if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
             const errors = err.errors.map(error => error.message);
             res.status(400).json({ errors });   
           } else {
-            throw err;
+            res.status(500).json({ errors });   
+            
           }
         }
     }
  )
-
- router.get('/courses',async (req,res)=>{
+//gets all the courses from the database
+router.get('/courses',async (req,res)=>{
      try{
         const courses = await Course.findAll({
             include:[{
-                model:User,
-            }]
+                model:User,attributes:["firstName","lastName","emailAddress"]
+            }],attributes:["title","description","estimatedTime","materialsNeeded"]
         });
         res.status(200).json(courses);
      }catch(err){
+        res.status(400).json({ message:"No courses found" });   
+    }
+})
 
-     }
- })
-
- router.post('/courses',async (req,res)=>{
-    console.log(req.body)
+//creates a new course
+router.post('/courses',authenticateUser, async (req,res)=>{
     try{
         await Course.create(req.body);
         const courseId=await Course.findOne({where:{title:req.body.title}});
-        res.location(`courses/${courseId.id}`).status(201).json({ "message": "Account successfully created!" });
-        // {
-        //     "title": "zeeee",
-        //     "description":"Godidnhho",
-        //     "estimatedTime":"dsadhdasd",
-        //     "materialsNeeded":"fdhfsdfdsdf",
-        //     "userId":"1"
-        // }
+        res.location(`courses/${courseId.id}`).status(201).end();
     }catch(err){
         if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
             const errors = err.errors.map(error => error.message);
             res.status(400).json({ errors });   
           } else {
-            throw err;
+            res.status(500);   
           }
         }
 })
-router.put('/courses/:id',async (req,res)=>{
-    try{
+//Updates an existing course that belongs to the current user
+router.put('/courses/:id',authenticateUser, async (req,res)=>{
+    const user = req.currentUser;
+        try{
         const course= await Course.findByPk(req.params.id);
+    //if course belongs to current user
+    if(user.id==course.userId){
         await course.update(req.body);
-        res.location(`courses/${req.params.id}`).status(204).json({ "message": "Course updated" });
+        res.location(`courses/${req.params.id}`).status(204).end();
+    }else{
+        res.status(403).json({ message:"acess denied" });   
+    } 
     }catch(err){
         if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
             const errors = err.errors.map(error => error.message);
             res.status(400).json({ errors });   
           } else {
-            throw err;
+            res.status(500);
           }
         }
-    }
-)
-router.delete('/courses/:id',async (req,res)=>{
-    try{
+    })
+ 
+//deletes a course that belongs to the current user
+router.delete('/courses/:id',authenticateUser, async (req,res)=>
+{
+    const user = req.currentUser;
+        try{
         const course= await Course.findByPk(req.params.id);
-        await course.destroy();
-        res.location(`courses`).status(204).json({ "message": "Course updated" });
+        //if course belongs to current user
+        if(user.id==course.userId){
+            await course.destroy();
+            res.location(`courses`).status(204).end();
+        }
+        else{
+        res.status(403).json({ message:"acess denied" });   
+        }
     }catch(err){
-       res.status(400).json({message:"not found"});
-    }
+        res.status(500);
+    }    
 })
-
+//Find a specific course using a id number
  router.get('/courses/:id',async (req,res)=>{
     try{
        const course = await Course.findByPk(req.params.id,{
            include:[{
-               model:User,
-           }]
+               model:User,model:User,attributes:["firstName","lastName","emailAddress"]
+            }],attributes:["title","description","estimatedTime","materialsNeeded"]
        });
        res.status(200).json(course);
-
     }catch(err){
-
+        res.status(401);
     }
 })
 

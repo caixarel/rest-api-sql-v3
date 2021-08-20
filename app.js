@@ -15,6 +15,7 @@ app.use(express.json());
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
 
+//verifing the connection and syncronization to the database
 (async () => {
   try {
     await sequelize.authenticate();
@@ -46,7 +47,6 @@ app.use((err, req, res, next) => {
   if (enableGlobalErrorLogging) {
     console.error(`Global error handler: ${JSON.stringify(err.stack)}`);
   }
-
   res.status(err.status || 500).json({
     message: err.message,
     error: {},

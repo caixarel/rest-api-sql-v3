@@ -18,10 +18,9 @@ router.get('/users',authenticateUser ,async (req,res)=>{
             firstName:user.firstName,
             lastName:user.lastName,
             emailAddress:user.emailAddress
-        })
-        res.status(200);
+        }).status(200).end();
     }catch{
-        res.status(400);
+        res.status(400).end();
 
     }
  })
@@ -67,7 +66,7 @@ router.post('/courses',authenticateUser, async (req,res)=>{
             const errors = err.errors.map(error => error.message);
             res.status(400).json({ errors });   
           } else {
-            res.status(500);   
+            res.status(500).end();   
           }
         }
 })
@@ -77,18 +76,18 @@ router.put('/courses/:id',authenticateUser, async (req,res)=>{
         try{
         const course= await Course.findByPk(req.params.id);
     //if course belongs to current user
-    if(user.id==course.userId){
-        await course.update(req.body);
-        res.location(`courses/${req.params.id}`).status(204).end();
-    }else{
-        res.status(403).json({ message:"acess denied" });   
-    } 
+        if(user.id==course.userId && course){
+            await course.update(req.body);
+            res.location(`courses/${req.params.id}`).status(204).end();
+        }else{
+            res.status(403).json({ message:"acess denied" });   
+        } 
     }catch(err){
         if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
             const errors = err.errors.map(error => error.message);
             res.status(400).json({ errors });   
           } else {
-            res.status(500);
+            res.status(500).end();
           }
         }
     })
@@ -100,7 +99,7 @@ router.delete('/courses/:id',authenticateUser, async (req,res)=>
         try{
         const course= await Course.findByPk(req.params.id);
         //if course belongs to current user
-        if(user.id==course.userId){
+        if(user.id==course.userId && course){
             await course.destroy();
             res.location(`courses`).status(204).end();
         }
@@ -108,7 +107,7 @@ router.delete('/courses/:id',authenticateUser, async (req,res)=>
         res.status(403).json({ message:"acess denied" });   
         }
     }catch(err){
-        res.status(500);
+        res.status(500).end();
     }    
 })
 //Find a specific course using a id number
@@ -119,9 +118,13 @@ router.delete('/courses/:id',authenticateUser, async (req,res)=>
                model:User,model:User,attributes:["firstName","lastName","emailAddress"]
             }],attributes:["title","description","estimatedTime","materialsNeeded"]
        });
-       res.status(200).json(course);
+       if(course){
+            res.status(200).json(course);
+       }else{
+        res.status(404).json({message:"Course doesn't exist"});
+       }
     }catch(err){
-        res.status(401);
+        res.status(401).end();
     }
 })
 

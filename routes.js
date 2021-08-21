@@ -2,7 +2,7 @@
 
 const express = require('express');
 const User = require('./models').User;
-const { Course } = require('./models/')
+const { Course } = require('./models/');
 const { authenticateUser } = require('./middleware/user-authentication');
 
 
@@ -59,8 +59,8 @@ router.get('/courses',async (req,res)=>{
 router.post('/courses',authenticateUser, async (req,res)=>{
     try{
         await Course.create(req.body);
-        const courseId=await Course.findOne({where:{title:req.body.title}});
-        res.location(`courses/${courseId.id}`).status(201).end();
+        const courseId=await Course.findOne({order:[["createdAt","DESC"]]});
+        res.location(`/courses/${courseId.id}`).status(201).end();
     }catch(err){
         if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
             const errors = err.errors.map(error => error.message);
